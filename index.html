@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Your Website</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ===== NAVBAR ===== -->
+<header class="navbar">
+  <div class="nav-left">
+    <img src="logo.png" alt="Logo" class="logo">
+  </div>
+
+  <nav class="nav-right">
+      <a href="#" class="nav-link" onclick="goHome()">Home</a>
+
+    <!-- ABOUT US DROPDOWN -->
+    <div class="nav-dropdown">
+      <button class="nav-link dropbtn">About Us</button>
+      <div class="dropdown-content">
+        <a href="#" onclick="showSection('who-we-are')">Who We Are</a>
+        <a href="#" onclick="showSection('our-partners')">Our Partners</a>
+      </div>
+    </div>
+
+    <div class="nav-dropdown">
+     <button class="nav-link dropbtn">Webcam</button>
+      <div class="dropdown-content">
+       <a href="#" onclick="openWebcam('scoliosis')">Scoliosis Detection</a>
+       <a href="#" onclick="openWebcam('physio')">Physio Exercise</a>
+     </div>
+    </div>
+    <a href="#" class="nav-link">Get Help</a>
+    <a href="#" class="nav-link">Get Involved</a>
+  </nav>
+</header>
+
+<!-- ===== HERO / HOME ===== -->
+<section class="hero">
+  <div class="hero-text">
+    <h1>We’ve Got Your Back</h1>
+    <p>Supporting scoliosis patients and families through awareness, care, and community.</p>
+  </div>
+</section>
+
+<!-- ===== SCOLIOSIS DETECTION ===== -->
+<section id="scoliosis" class="content-section hidden">
+  <h2>Scoliosis Detection</h2>
+  <video id="video1" autoplay muted playsinline></video>
+  <p id="result1">Initializing camera…</p>
+</section>
+
+
+<!-- ===== PHYSIO EXERCISE ===== -->
+<section id="physio" class="content-section hidden">
+  <h2>Physio Exercise</h2>
+
+  <div style="margin-bottom: 12px;">
+    <label>
+      <input type="radio" name="arm" value="right" checked>
+      Right Arm
+    </label>
+    &nbsp;&nbsp;
+    <label>
+      <input type="radio" name="arm" value="left">
+      Left Arm
+    </label>
+  </div>
+
+ <p id="result2" style="font-weight:600; margin-top:10px;">
+  Reps: 0
+</p>
+
+<video id="video2" autoplay muted playsinline></video>
+<canvas id="canvas2"></canvas>
+
+</section>
+
+<!-- ===== WHO WE ARE ===== -->
+<section id="who-we-are" class="content-section hidden">
+  <h2>Who We Are</h2>
+
+  <h3>About Us</h3>
+  <p>
+    We are a community-driven initiative dedicated to improving scoliosis awareness,
+    early detection, and access to care.
+  </p>
+
+  <h3>Our Vision</h3>
+  <p>
+    A future where scoliosis is detected early and supported holistically.
+  </p>
+</section>
+
+<!-- ===== OUR PARTNERS ===== -->
+<section id="our-partners" class="content-section hidden">
+  <h2>Our Partners</h2>
+  <p>
+    We work with healthcare professionals, schools, and advocacy groups
+    to support scoliosis patients and families.
+  </p>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+<script src="script.js"></script>
+
+<script>
+function showSection(id) {
+  // hide all content sections
+  document.querySelectorAll('.content-section').forEach(sec => {
+    sec.classList.add('hidden');
+  });
+
+  // show selected section
+  document.getElementById(id).classList.remove('hidden');
+
+  // scroll to it
+  document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+}
+
+function goHome() {
+  // hide all content sections
+  document.querySelectorAll('.content-section').forEach(sec => {
+    sec.classList.add('hidden');
+  });
+
+  // scroll to top (hero)
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+let camera1 = null;
+let camera2 = null;
+let reps = 0;
+let armUp = false;
+
+function openWebcam(type) {
+  document.querySelectorAll('.content-section').forEach(sec => {
+    sec.classList.add('hidden');
+  });
+
+  document.getElementById(type).classList.remove('hidden');
+  document.getElementById(type).scrollIntoView({ behavior: 'smooth' });
+
+  if (type === "scoliosis" && !camera1) startScoliosis();
+  if (type === "physio" && !camera2) startPhysio();
+}
+
+/* ===== SCOLIOSIS DETECTION ===== */
+function startScoliosis() {
+  const video = document.getElementById("video1");
+  const canvas = document.getElementById("canvas1");
+  const ctx = canvas.getContext("2d");
+  const result = document.getElementById("result1");
+
+  const pose = new Pose({
+    locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`
+  });
+
+  pose.setOptions({
+    modelComplexity: 1,
+    minDetectionConfidence: 0.6,
+    minTrackingConfidence: 0.6
+  });
+
+pose.onResults(res => {
+     if (!res.poseLandmarks) return;
+
+    const wrist = res.poseLandmarks[16];
+    const shoulder = res.poseLandmarks[12];
+
+    if (wrist.y < shoulder.y && !armUp) armUp = true;
+    if (wrist.y > shoulder.y && armUp) {
+      reps++;
+      armUp = false;
+      result.innerText = `Reps: ${reps}`;
+    }
+  });
+
+  camera2 = new Camera(video, {
+    onFrame: async () => await pose.send({ image: video }),
+    width: 640,
+    height: 480
+  });
+
+  camera2.start();
+}
+
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+<script src="script.js"></script>
+
+</body>
+</html>
