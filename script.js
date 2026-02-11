@@ -8,7 +8,7 @@ function stopCamera() {
     camera = null;
   }
 }
-/* PAGE SWITCHING */
+
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -19,6 +19,7 @@ function showPage(id) {
   }
 }
 
+/* ===================== SECTION CONTROL ===================== */
 function openWebcam(type) {
   document.querySelectorAll(".content-section").forEach(sec => {
     sec.classList.add("hidden");
@@ -35,11 +36,11 @@ function openWebcam(type) {
 /* ===================== SCOLIOSIS (ONE CAMERA) ===================== */
 function startScoliosis() {
   const video = document.getElementById("video1");
+  const canvas = document.getElementById("canvas1");
+  const ctx = canvas.getContext("2d");
   const result = document.getElementById("result1");
 
-  result.innerText = "Initializing camera…";
-
-  const pose = new Pose({
+  pose = new Pose({
     locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`
   });
 
@@ -50,32 +51,32 @@ function startScoliosis() {
   });
 
   pose.onResults(res => {
-    console.log("Pose results received"); // DEBUG LINE
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(res.image, 0, 0, canvas.width, canvas.height);
 
     if (!res.poseLandmarks) {
-      result.innerText = "⚠️ No body detected. Step back.";
+      result.innerText = "No body detected";
       return;
     }
 
-    const left = res.poseLandmarks[11];
-    const right = res.poseLandmarks[12];
-    const diff = Math.abs(left.y - right.y);
+    const L = res.poseLandmarks[11];
+    const R = res.poseLandmarks[12];
+    const diff = Math.abs(L.y - R.y);
 
     result.innerText =
-      diff > 0.04
+      diff > 0.05
         ? "⚠️ Shoulders appear unbalanced"
         : "✅ Shoulders appear level";
   });
 
-  camera1 = new Camera(video, {
-    onFrame: async () => {
-      await pose.send({ image: video });
-    },
+  camera = new Camera(video, {
+    onFrame: async () => await pose.send({ image: video }),
     width: 640,
     height: 480
   });
 
-  camera1.start();
+  camera.start();
 }
 
 /* ===================== PHYSIO (LEFT / RIGHT FIXED) ===================== */
