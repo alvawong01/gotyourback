@@ -1,14 +1,6 @@
 let camera = null;
 let pose = null;
 
-/* ===================== COMMON ===================== */
-function stopCamera() {
-  if (camera) {
-    camera.stop();
-    camera = null;
-  }
-}
-
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -16,6 +8,14 @@ function showPage(id) {
   if (id === "webcam" && !cameraStarted) {
     startWebcam();
     cameraStarted = true;
+  }
+}
+
+/* ===================== COMMON ===================== */
+function stopCamera() {
+  if (camera) {
+    camera.stop();
+    camera = null;
   }
 }
 
@@ -144,3 +144,4 @@ function startPhysio() {
 
   camera.start();
 }
+
