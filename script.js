@@ -69,10 +69,7 @@ function startScoliosis() {
   camera.start();
 }
 
-/* ===================== PHYSIO (LEFT / RIGHT FIXED) ===================== */
-let reps = 0;
-let armUp = false;
-
+/* ===== PHYSIO ===== */
 function startPhysio() {
   const video = document.getElementById("video2");
   const canvas = document.getElementById("canvas2");
@@ -94,32 +91,18 @@ function startPhysio() {
   });
 
   pose.onResults(res => {
+    if (!res.poseLandmarks) return;
+
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     ctx.drawImage(res.image, 0, 0, canvas.width, canvas.height);
 
-    if (!res.poseLandmarks) return;
+    const arm = document.querySelector('input[name="arm"]:checked').value;
+    const wrist = arm === "right" ? res.poseLandmarks[16] : res.poseLandmarks[15];
+    const shoulder = arm === "right" ? res.poseLandmarks[12] : res.poseLandmarks[11];
 
-    const selectedArm =
-      document.querySelector('input[name="arm"]:checked').value;
-
-    const wrist =
-      selectedArm === "right"
-        ? res.poseLandmarks[16]
-        : res.poseLandmarks[15];
-
-    const shoulder =
-      selectedArm === "right"
-        ? res.poseLandmarks[12]
-        : res.poseLandmarks[11];
-
-    const threshold = 0.05;
-
-    if (wrist.y < shoulder.y - threshold && !armUp) {
-      armUp = true;
-    }
-
-    if (wrist.y > shoulder.y + threshold && armUp) {
+    if (wrist.y < shoulder.y && !armUp) armUp = true;
+    if (wrist.y > shoulder.y && armUp) {
       reps++;
       armUp = false;
       result.innerText = `Reps: ${reps}`;
